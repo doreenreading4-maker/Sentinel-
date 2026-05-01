@@ -3,6 +3,8 @@ require('dotenv').config();
 const { Client, GatewayIntentBits } = require('discord.js');
 const express = require('express');
 
+// -------------------- BOT SETUP --------------------
+
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -11,7 +13,8 @@ const client = new Client({
     ]
 });
 
-// web server (for uptime)
+// -------------------- KEEP ALIVE SERVER --------------------
+
 const app = express();
 
 app.get('/', (req, res) => {
@@ -19,11 +22,14 @@ app.get('/', (req, res) => {
 });
 
 app.listen(3000, () => {
-    console.log('Health check running');
+    console.log('Health check server running');
 });
 
-// user memory
+// -------------------- USER DATA --------------------
+
 const users = {};
+
+// -------------------- PERSONALITY --------------------
 
 function getPersonality(u) {
     if (u.toxic >= 10) return "Chaos Agent 😈";
@@ -33,16 +39,19 @@ function getPersonality(u) {
     return "Balanced Human 🙂";
 }
 
-// ready event
+// -------------------- READY EVENT --------------------
+
 client.once('ready', () => {
     console.log(`Logged in as ${client.user.tag}`);
 });
 
-// message system
-client.on('messageCreate', (message) => {
+// -------------------- MESSAGE SYSTEM --------------------
+
+client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
 
     const id = message.author.id;
+    const text = message.content.toLowerCase();
 
     if (!users[id]) {
         users[id] = {
@@ -55,32 +64,68 @@ client.on('messageCreate', (message) => {
     const u = users[id];
     u.messages++;
 
-    const text = message.content.toLowerCase();
+    // helpful tracking
+    if (text.includes("thanks") || text.includes("thank you")) {
+        u.helpful++;
+    }
 
+    // toxic tracking (safe version)
     const badWords = ["stupid", "idiot", "shut up"];
 
     if (badWords.some(word => text.includes(word))) {
         u.toxic++;
     }
 
-    if (text.includes("thanks") || text.includes("thank you")) {
-        u.helpful++;
-    }
+    // -------------------- COMMANDS --------------------
 
+    // personality
     if (text === "!personality") {
-        message.reply(`🧠 Personality Report
+        return message.reply(
+`🧠 Personality Report
 
 📊 Messages: ${u.messages}
 🤝 Helpful: ${u.helpful}
 ⚠️ Toxic: ${u.toxic}
 
-🎭 Type: ${getPersonality(u)}`);
+🎭 Type: ${getPersonality(u)}`
+        );
     }
 
+    // ping
     if (text === "!ping") {
-        message.reply("Pong 🧪");
+        return message.reply("Pong 🧪");
+    }
+
+    // leaderboard
+    if (text === "!leaderboard") {
+        const sorted = Object.entries(users)
+            .sort((a, b) => b[1].messages - a[1].messages)
+            .slice(0, 10);
+
+        if (sorted.length === 0) {
+            return message.reply("No data yet 📊");
+        }
+
+        let board = "🏆 **Leaderboard (Most Active Users)**\n\n";
+
+        for (let i = 0; i < sorted.length; i++) {
+            const userId = sorted[i][0];
+            const data = sorted[i][1];
+
+            let username = "Unknown";
+
+            try {
+                const user = await client.users.fetch(userId);
+                username = user.username;
+            } catch {}
+
+            board += `#${i + 1} **${username}** — ${data.messages} messages\n`;
+        }
+
+        message.reply(board);
     }
 });
 
-// login
+// -------------------- LOGIN --------------------
+
 client.login(process.env.TOKEN);
