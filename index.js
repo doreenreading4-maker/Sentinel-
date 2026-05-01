@@ -79,15 +79,17 @@ client.on('messageCreate', async (message) => {
     if (text === "!personality") {
         return message.reply(`🧠 Your personality is: **${getPersonality(u)}**`);
     }
+if (text === "!stats") {
+    return message.reply(
+`🧠 Personality Report
 
-    if (text === "!stats") {
-        return message.reply(
-            `📊 Your Stats:
-💬 Messages: ${u.messages}
-💙 Helpful: ${u.helpful}
-⚠️ Toxic: ${u.toxic}`
-        );
-    }
+📊 Messages: ${u.messages}
+🤝 Helpful: ${u.helpful}
+⚠️ Toxic: ${u.toxic}
+
+🎭 Type: ${getPersonality(u)}`
+    );
+}
 });
 
 // -------------------- LOGIN --------------------
