@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const { Client, GatewayIntentBits } = require('discord.js');
 
 const client = new Client({
@@ -8,7 +10,7 @@ const client = new Client({
     ]
 });
 
-// user stats
+// user memory
 const users = {};
 
 // personality system
@@ -20,10 +22,12 @@ function getPersonality(u) {
     return "Balanced Human 🙂";
 }
 
+// ready event
 client.once('clientReady', () => {
     console.log(`Logged in as ${client.user.tag}`);
 });
 
+// message system
 client.on('messageCreate', (message) => {
     if (message.author.bot) return;
 
@@ -42,14 +46,17 @@ client.on('messageCreate', (message) => {
 
     const text = message.content.toLowerCase();
 
+    // helpful tracking
     if (text.includes("thanks") || text.includes("thank you")) {
         u.helpful++;
     }
 
+    // toxic tracking
     if (text.includes("stupid") || text.includes("idiot") || text.includes("shut up")) {
         u.toxic++;
     }
 
+    // personality command
     if (text === "!personality") {
         const type = getPersonality(u);
 
@@ -64,10 +71,20 @@ client.on('messageCreate', (message) => {
         );
     }
 
+    // test command
     if (text === "!ping") {
         message.reply("Pong 🧪");
     }
 });
 
-// 🔴 PUT YOUR TOKEN HERE
-client.login("MTQ5OTgwMDk3MDQzODM3NzczNQ.GsqzLG.3WpmMiMa6PWHtVJvgdwnAq7j7o4ovtp3fP8Kr0");
+// LOGIN (works for both local + Render)
+client.login(process.env.TOKEN);
+
+const express = require('express');
+const app = express();
+
+app.get('/', (req, res) => {
+    res.send('Bot is alive');
+});
+
+app.listen(3000);
