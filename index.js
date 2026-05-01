@@ -1,11 +1,10 @@
 require('dotenv').config();
 
-const { Client, GatewayIntentBits } = require('discord.js');
-
-// -------------------- TOKEN DEBUG --------------------
-
-console.log("TOKEN LOADED:", process.env.TOKEN ? "YES" : "NO");
-console.log("TOKEN LENGTH:", process.env.TOKEN?.length);
+const {
+    Client,
+    GatewayIntentBits,
+    Partials
+} = require('discord.js');
 
 // -------------------- BOT SETUP --------------------
 
@@ -13,15 +12,19 @@ const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent
-    ]
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.DirectMessages
+    ],
+    partials: [Partials.Channel]
 });
 
 // -------------------- KEEP ALIVE (Render SAFE) --------------------
 
-require('http').createServer((req, res) => {
-    res.end('Bot is running ✔');
-}).listen(3000);
+require('http')
+    .createServer((req, res) => {
+        res.end('Bot is running ✔');
+    })
+    .listen(3000);
 
 // -------------------- USER DATA --------------------
 
@@ -37,15 +40,16 @@ function getPersonality(u) {
     return "Balanced Human 🙂";
 }
 
-// -------------------- READY EVENT --------------------
+// -------------------- READY --------------------
 
 client.once('ready', () => {
     console.log(`Logged in as ${client.user.tag} 🚀`);
 });
 
-// -------------------- MESSAGE SYSTEM --------------------
+// -------------------- MESSAGE HANDLER --------------------
 
-client.on('messageCreate', async (message) => {
+client.on('messageCreate', (message) => {
+    if (!message.guild) return; // ignore DMs if needed
     if (message.author.bot) return;
 
     const id = message.author.id;
@@ -70,17 +74,14 @@ client.on('messageCreate', async (message) => {
     // toxic tracking ⚠️
     const badWords = ["stupid", "idiot", "shut up"];
 
-    if (badWords.some(word => text.includes(word))) {
+    if (badWords.some(w => text.includes(w))) {
         u.toxic++;
     }
 
     // -------------------- COMMANDS --------------------
 
-    if (text === "!personality") {
-        return message.reply(`🧠 Your personality is: **${getPersonality(u)}**`);
-    }
-if (text === "!stats") {
-    return message.reply(
+    if (text === "!personality" || text === "!stats") {
+        return message.reply(
 `🧠 Personality Report
 
 📊 Messages: ${u.messages}
@@ -88,8 +89,8 @@ if (text === "!stats") {
 ⚠️ Toxic: ${u.toxic}
 
 🎭 Type: ${getPersonality(u)}`
-    );
-}
+        );
+    }
 });
 
 // -------------------- LOGIN --------------------
