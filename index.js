@@ -2,6 +2,11 @@ require('dotenv').config();
 
 const { Client, GatewayIntentBits } = require('discord.js');
 
+// -------------------- DEBUG TOKEN (IMPORTANT) --------------------
+
+console.log("TOKEN LOADED:", process.env.TOKEN ? "YES" : "NO");
+console.log("TOKEN LENGTH:", process.env.TOKEN?.length);
+
 // -------------------- BOT SETUP --------------------
 
 const client = new Client({
@@ -14,9 +19,11 @@ const client = new Client({
 
 // -------------------- KEEP ALIVE (Render SAFE) --------------------
 
-require('http').createServer((req, res) => {
-    res.end('Bot is running ✔');
-}).listen(3000);
+require('http')
+    .createServer((req, res) => {
+        res.end('Bot is running ✔');
+    })
+    .listen(3000);
 
 // -------------------- USER DATA --------------------
 
@@ -57,19 +64,15 @@ client.on('messageCreate', async (message) => {
     const u = users[id];
     u.messages++;
 
-    // helpful tracking
     if (text.includes("thanks") || text.includes("thank you")) {
         u.helpful++;
     }
 
-    // toxic tracking (safe version)
     const badWords = ["stupid", "idiot", "shut up"];
 
     if (badWords.some(word => text.includes(word))) {
         u.toxic++;
     }
-
-    // -------------------- COMMANDS --------------------
 
     if (text === "!personality") {
         return message.reply(`Your personality is: ${getPersonality(u)}`);
