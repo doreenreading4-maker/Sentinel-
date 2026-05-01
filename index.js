@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const { Client, GatewayIntentBits } = require('discord.js');
+const express = require('express');
 
 const client = new Client({
     intents: [
@@ -10,10 +11,20 @@ const client = new Client({
     ]
 });
 
+// web server (for uptime)
+const app = express();
+
+app.get('/', (req, res) => {
+    res.status(200).send('Bot is running ✔');
+});
+
+app.listen(3000, () => {
+    console.log('Health check running');
+});
+
 // user memory
 const users = {};
 
-// personality system
 function getPersonality(u) {
     if (u.toxic >= 10) return "Chaos Agent 😈";
     if (u.helpful >= 10) return "Server Guardian 🛡️";
@@ -23,7 +34,7 @@ function getPersonality(u) {
 }
 
 // ready event
-client.once('clientReady', () => {
+client.once('ready', () => {
     console.log(`Logged in as ${client.user.tag}`);
 });
 
@@ -46,45 +57,30 @@ client.on('messageCreate', (message) => {
 
     const text = message.content.toLowerCase();
 
-    // helpful tracking
+    const badWords = ["stupid", "idiot", "shut up"];
+
+    if (badWords.some(word => text.includes(word))) {
+        u.toxic++;
+    }
+
     if (text.includes("thanks") || text.includes("thank you")) {
         u.helpful++;
     }
 
-    // toxic tracking
-    if (text.includes("stupid") || text.includes("idiot") || text.includes("shut up")) {
-        u.toxic++;
-    }
-
-    // personality command
     if (text === "!personality") {
-        const type = getPersonality(u);
-
-        message.reply(
-`🧠 Personality Report
+        message.reply(`🧠 Personality Report
 
 📊 Messages: ${u.messages}
 🤝 Helpful: ${u.helpful}
 ⚠️ Toxic: ${u.toxic}
 
-🎭 Type: ${type}`
-        );
+🎭 Type: ${getPersonality(u)}`);
     }
 
-    // test command
     if (text === "!ping") {
         message.reply("Pong 🧪");
     }
 });
 
-// LOGIN (works for both local + Render)
+// login
 client.login(process.env.TOKEN);
-
-const express = require('express');
-const app = express();
-
-app.get('/', (req, res) => {
-    res.send('Bot is alive');
-});
-
-app.listen(3000);
