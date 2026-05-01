@@ -2,7 +2,7 @@ require('dotenv').config();
 
 const { Client, GatewayIntentBits } = require('discord.js');
 
-// -------------------- DEBUG TOKEN (IMPORTANT) --------------------
+// -------------------- TOKEN DEBUG --------------------
 
 console.log("TOKEN LOADED:", process.env.TOKEN ? "YES" : "NO");
 console.log("TOKEN LENGTH:", process.env.TOKEN?.length);
@@ -19,17 +19,15 @@ const client = new Client({
 
 // -------------------- KEEP ALIVE (Render SAFE) --------------------
 
-require('http')
-    .createServer((req, res) => {
-        res.end('Bot is running ✔');
-    })
-    .listen(3000);
+require('http').createServer((req, res) => {
+    res.end('Bot is running ✔');
+}).listen(3000);
 
 // -------------------- USER DATA --------------------
 
 const users = {};
 
-// -------------------- PERSONALITY --------------------
+// -------------------- PERSONALITY SYSTEM --------------------
 
 function getPersonality(u) {
     if (u.toxic >= 10) return "Chaos Agent 😈";
@@ -42,7 +40,7 @@ function getPersonality(u) {
 // -------------------- READY EVENT --------------------
 
 client.once('ready', () => {
-    console.log(`Logged in as ${client.user.tag}`);
+    console.log(`Logged in as ${client.user.tag} 🚀`);
 });
 
 // -------------------- MESSAGE SYSTEM --------------------
@@ -64,18 +62,31 @@ client.on('messageCreate', async (message) => {
     const u = users[id];
     u.messages++;
 
+    // helpful tracking 💙
     if (text.includes("thanks") || text.includes("thank you")) {
         u.helpful++;
     }
 
+    // toxic tracking ⚠️
     const badWords = ["stupid", "idiot", "shut up"];
 
     if (badWords.some(word => text.includes(word))) {
         u.toxic++;
     }
 
+    // -------------------- COMMANDS --------------------
+
     if (text === "!personality") {
-        return message.reply(`Your personality is: ${getPersonality(u)}`);
+        return message.reply(`🧠 Your personality is: **${getPersonality(u)}**`);
+    }
+
+    if (text === "!stats") {
+        return message.reply(
+            `📊 Your Stats:
+💬 Messages: ${u.messages}
+💙 Helpful: ${u.helpful}
+⚠️ Toxic: ${u.toxic}`
+        );
     }
 });
 
